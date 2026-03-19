@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA Vera Rubin 平台產業生態系探索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0b1120;
+            color: #f1f5f9;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .rack-container {
+            perspective: 1200px;
+        }
+        .chip-hotspot {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            stroke-width: 1.5;
+            stroke: rgba(118, 185, 0, 0.2);
+        }
+        .chip-hotspot:hover {
+            fill: rgba(118, 185, 0, 0.35) !important;
+            stroke: rgba(118, 185, 0, 1);
+            filter: drop-shadow(0 0 12px rgba(118, 185, 0, 0.5));
+        }
+        .active-chip {
+            fill: rgba(118, 185, 0, 0.45) !important;
+            stroke: rgba(118, 185, 0, 1);
+            stroke-width: 2.5;
+        }
+        .info-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .cost-bar-bg {
+            background: #1e293b;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .cost-bar-fill {
+            background: linear-gradient(90deg, #76b900, #98d133);
+            height: 100%;
+            transition: width 1s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        /* 自定義捲軸 */
+        #detail-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+        #detail-panel::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-12 text-center">
+            <h1 class="text-5xl font-extrabold text-[#76b900] mb-4 tracking-tight italic">VERA RUBIN <span class="text-white font-normal">PLATFORM</span></h1>
+            <p class="text-slate-400 text-lg">AI 工廠產業鏈全解析：點擊組件探索關鍵供應商與 BOM 構成</p>
+        </header>
+
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-10 items-start">
+            <!-- 左側：機櫃透視圖 (SVG) -->
+            <div class="xl:col-span-5 rack-container bg-slate-900/50 p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <svg width="200" height="200" viewBox="0 0 100 100"><path d="M10,10 L90,90 M10,90 L90,10" stroke="white"/></svg>
+                </div>
+                
+                <svg viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto drop-shadow-2xl">
+                    <!-- 機櫃框架 -->
+                    <rect x="50" y="20" width="300" height="560" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="6"/>
+                    <rect x="55" y="25" width="290" height="550" rx="8" stroke="#334155" stroke-width="1" stroke-dasharray="5 5"/>
+                    
+                    <!-- 頂部網路區 -->
+                    <g id="switches-group">
+                        <rect class="chip-hotspot" data-chip="quantum" x="75" y="45" width="250" height="35" rx="4" fill="#1e293b" />
+                        <text x="200" y="67" fill="#64748b" font-size="10" text-anchor="middle" font-weight="bold">QUANTUM-X800 (IB)</text>
+                        
+                        <rect class="chip-hotspot" data-chip="spectrum" x="75" y="90" width="250" height="35" rx="4" fill="#1e293b" />
+                        <text x="200" y="112" fill="#64748b" font-size="10" text-anchor="middle" font-weight="bold">SPECTRUM-X800 (ETH)</text>
+                    </g>
+
+                    <!-- 計算盤區 -->
+                    <g id="compute-core">
+                        <!-- GPU/CPU 區域 -->
+                        <rect class="chip-hotspot" data-chip="rubin" x="85" y="150" width="110" height="110" rx="8" fill="#1e293b" />
+                        <text x="140" y="210" fill="#94a3b8" font-size="14" text-anchor="middle" font-weight="bold">RUBIN GPU</text>
+                        
+                        <rect class="chip-hotspot" data-chip="vera" x="205" y="150" width="110" height="110" rx="8" fill="#1e293b" />
+                        <text x="260" y="210" fill="#94a3b8" font-size="14" text-anchor="middle" font-weight="bold">VERA CPU</text>
+
+                        <!-- DPU/NIC 區域 -->
+                        <rect class="chip-hotspot" data-chip="bluefield" x="85" y="270" width="230" height="50" rx="6" fill="#1e293b" />
+                        <text x="200" y="302" fill="#64748b" font-size="12" text-anchor="middle" font-weight="bold">BLUEFIELD-4 DPU</text>
+
+                        <rect class="chip-hotspot" data-chip="connectx" x="85" y="330" width="230" height="40" rx="6" fill="#1e293b" />
+                        <text x="200" y="356" fill="#64748b" font-size="12" text-anchor="middle" font-weight="bold">CONNECTX-8 NIC</text>
+                        
+                        <!-- 裝飾用線條 -->
+                        <path d="M140 260 V270 M260 260 V270" stroke="#334155" />
+                    </g>
+
+                    <!-- NVLink 背板 -->
+                    <g id="nvlink-back">
+                        <rect class="chip-hotspot" data-chip="nvlink" x="75" y="420" width="250" height="140" rx="10" fill="#1e293b" />
+                        <text x="200" y="490" fill="#76b900" font-size="18" text-anchor="middle" font-weight="black">NVLINK SWITCH</text>
+                        <text x="200" y="515" fill="#475569" font-size="10" text-anchor="middle">COPPER PASSIVE BACKPLANE</text>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- 右側：深度解析面板 -->
+            <div id="detail-panel" class="xl:col-span-7 info-card p-8 rounded-3xl min-h-[600px] overflow-y-auto max-h-[800px]">
+                <div id="placeholder-text" class="h-full flex flex-col items-center justify-center text-center py-20">
+                    <div class="w-24 h-24 mb-6 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                        <svg class="w-12 h-12 text-[#76b900] animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-4">探索 AI 工廠的供應鏈</h2>
+                    <p class="text-slate-400 max-w-sm">請點擊左側圖示，深入解析每一顆晶片在 Vera Rubin 生態系中的商業與技術地位。</p>
+                </div>
+
+                <div id="chip-content" class="hidden animate-in fade-in slide-in-from-right-4 duration-500">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+                        <div>
+                            <div class="flex items-center gap-3 mb-1">
+                                <span class="bg-[#76b900] text-black tag">Certified Component</span>
+                                <span id="chip-id" class="text-slate-500 font-mono text-xs">ID: NVIDIA-VR-2026</span>
+                            </div>
+                            <h2 id="chip-title" class="text-4xl font-extrabold text-white"></h2>
+                            <p id="chip-subtitle" class="text-[#76b900] text-lg font-medium"></p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-slate-500 text-sm block mb-1">預估成本佔比</span>
+                            <span id="chip-cost-label" class="text-4xl font-black text-white"></span>
+                        </div>
+                    </div>
+
+                    <!-- 成本進度條 -->
+                    <div class="cost-bar-bg mb-10">
+                        <div id="chip-cost-bar" class="cost-bar-fill"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- 左欄：核心描述與供應商 -->
+                        <div class="space-y-8">
+                            <section>
+                                <h3 class="flex items-center gap-2 text-white font-bold mb-3">
+                                    <svg class="w-5 h-5 text-[#76b900]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    技術與功用
+                                </h3>
+                                <p id="chip-desc" class="text-slate-400 text-sm leading-relaxed"></p>
+                            </section>
+
+                            <section>
+                                <h3 class="flex items-center gap-2 text-white font-bold mb-3">
+                                    <svg class="w-5 h-5 text-[#76b900]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    潛在合作供應商
+                                </h3>
+                                <div id="chip-suppliers" class="flex flex-wrap gap-2"></div>
+                            </section>
+                        </div>
+
+                        <!-- 右欄：BOM 構成與協作 -->
+                        <div class="space-y-8">
+                            <section class="bg-slate-800/50 p-5 rounded-2xl border border-slate-700">
+                                <h3 class="text-white font-bold mb-4 flex items-center justify-between">
+                                    BOM 組成分析
+                                    <span class="text-[10px] text-slate-500 font-normal">BILL OF MATERIALS</span>
+                                </h3>
+                                <ul id="chip-bom" class="space-y-3"></ul>
+                            </section>
+
+                            <section id="chip-collab" class="p-5 bg-[#76b900]/10 rounded-2xl border border-[#76b900]/30">
+                                <h4 class="text-[#76b900] font-bold mb-2 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM14.243 15.657a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM5.757 14.243a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414z"></path></svg>
+                                    協作重點
+                                </h4>
+                                <p id="chip-collab-text" class="text-sm text-slate-300"></p>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-16 pt-8 border-t border-slate-800 text-center flex flex-col items-center gap-4">
+            <div class="flex gap-6 grayscale opacity-40">
+                <span class="text-white font-bold">TSMC</span>
+                <span class="text-white font-bold">SK hynix</span>
+                <span class="text-white font-bold">Micron</span>
+                <span class="text-white font-bold">Samsung</span>
+                <span class="text-white font-bold">Delta</span>
+            </div>
+            <p class="text-slate-500 text-xs">註：BOM 佔比與供應商資訊基於分析師報告與供應鏈調查推估。Vera Rubin 預計於 2026 年全面投產。</p>
+        </footer>
+    </div>
+
+    <script>
+        const chipData = {
+            rubin: {
+                title: "Vera Rubin GPU",
+                subtitle: "次世代 AI 推論/訓練重心",
+                desc: "採用台積電 N3 或更先進製程。核心突破在於 HBM4 的全面導入，單顆 GPU 可提供超過 2.8 TB/s 的記憶體頻寬。在 AFD 架構中，它是 Prefill 與 Attention 的執行主力。",
+                cost: "68%",
+                suppliers: ["台積電 (代工/CoWoS)", "SK 海力士 (HBM4)", "三星 (HBM4)", "美光 (HBM4)", "欣興 (載板)", "台達電 (電源)"],
+                bom: [
+                    { item: "GPU Logic Die (N3P/N2)", weight: "高" },
+                    { item: "HBM4 堆疊 (12-16層)", weight: "最高" },
+                    { item: "CoWoS-S/L 封裝", weight: "中高" },
+                    { item: "VRM 供電模組", weight: "中" }
+                ],
+                collab: "與 Groq LPU 協作，將處理完的 Interim Activations 透過 Spectrum-X 傳遞，進行 FFN/MoE 的外包運算。"
+            },
+            vera: {
+                title: "Vera CPU",
+                subtitle: "高性能計算節點調度者",
+                desc: "繼承 Grace 的成功，採用 Arm Neoverse V3/V4 核心。專為 AI 基礎設施設計，支援 LPDDR5X-on-package，與 GPU 之間透過 NVLink C2C 達成一體化記憶體空間。",
+                cost: "12%",
+                suppliers: ["台積電 (代工)", "Arm (架構授權)", "美光 (LPDDR5X)", "信驊 (BMC 晶片)"],
+                bom: [
+                    { item: "Arm Core Die", weight: "中高" },
+                    { item: "LPDDR5X 記憶體顆粒", weight: "中" },
+                    { item: "PCB 系統主機板", weight: "低" }
+                ],
+                collab: "負責管理整個計算盤的系統調度，並與 DPU 配合處理遠端存儲 (GPUDirect Storage) 的邏輯。"
+            },
+            nvlink: {
+                title: "NVLink Switch (G6)",
+                subtitle: "全機櫃高速互連背板",
+                desc: "解決機櫃內 72 顆 GPU 通訊瓶頸的關鍵。採用大量銅線（Copper）進行被動傳輸以降低能耗，搭配專用的 NVLink Switch 晶片達成無阻塞交換。",
+                cost: "10%",
+                suppliers: ["台積電 (晶片代工)", "貿聯-KY (高速連接器)", "嘉澤 (插槽)", "欣興 (高層數 PCB)"],
+                bom: [
+                    { item: "NVLink Switch ASIC", weight: "中" },
+                    { item: "銅纜與連接模組 (ACC)", weight: "中高" },
+                    { item: "散熱板與水冷管道", weight: "低" }
+                ],
+                collab: "確保機櫃內 72 顆 GPU 達成 130 TB/s 的交換頻寬，使整個機櫃如同一顆超級 GPU。"
+            },
+            bluefield: {
+                title: "BlueField-4 DPU",
+                subtitle: "AI 基礎設施處理單元",
+                desc: "整合了網路、存儲與安全任務。透過 800Gb/s 網路頻寬，它能卸載 CPU 的網路協定負擔，實現極致的數據預取速度。",
+                cost: "4%",
+                suppliers: ["台積電 (代工)", "Arm (核心)", "美光 (快取)", "智邦 (系統整合)"],
+                bom: [
+                    { item: "DPU 核心晶片", weight: "高" },
+                    { item: "快取記憶體 (DDR5)", weight: "低" },
+                    { item: "PCIe 6.0 界面控制器", weight: "低" }
+                ],
+                collab: "在跨機櫃的 AFD 運作中，確保 Interim Activations 傳輸時的數據完整性與低延遲。"
+            },
+            connectx: {
+                title: "ConnectX-8 NIC",
+                subtitle: "超高速網路介面卡",
+                desc: "實現 Scale-Out 橫向擴展的核心。支援 InfiniBand 與 Ethernet 雙協定，提供精準的硬體加速與流量控制。",
+                cost: "2%",
+                suppliers: ["台積電 (代工)", "鴻海 (模組組裝)", "眾達-KY (光收發器)"],
+                bom: [
+                    { item: "NIC 控制晶片", weight: "高" },
+                    { item: "SFP/QSFP 連接埠", weight: "中" }
+                ],
+                collab: "負責與外部機櫃通訊，是 Prefill Cluster 與 Decode Cluster 聯絡的通道。"
+            },
+            quantum: {
+                title: "Quantum-X800",
+                subtitle: "InfiniBand 交換系統",
+                desc: "專為極致訓練設計的交換機。具備 SHARP (可擴展分層聚合與減約協定) 技術，讓網路交換機也能進行初步的 AI 計算。",
+                cost: "2%",
+                suppliers: ["台積電 (晶片)", "緯創 (交換機代工)", "華星光 (光通訊)"],
+                bom: [
+                    { item: "Switch ASIC (量子核心)", weight: "最高" },
+                    { item: "光模組 (800G/1.6T)", weight: "高" }
+                ],
+                collab: "管理大規模訓練集群中的梯度交換，確保數萬顆 Rubin GPU 的同步效率。"
+            },
+            spectrum: {
+                title: "Spectrum-X800",
+                subtitle: "AI 優化乙太網路系統",
+                desc: "為推論場景設計，具備強大的擁塞控制與負載平衡功能。在 AFD 異質架構中，它是 GPU 與 LPU 之間溝通的「主幹道」。",
+                cost: "2%",
+                suppliers: ["台積電 (晶片)", "廣達 (代工)", "旭創 (光模組)"],
+                bom: [
+                    { item: "Spectrum Switch ASIC", weight: "最高" },
+                    { item: "散熱模組與電源模組", weight: "低" }
+                ],
+                collab: "連接 Rubin GPU 與 Groq 3 LPU (LPX 機櫃)，是解碼階段 AFD 循環的主要通訊鏈路。"
+            }
+        };
+
+        const hotspots = document.querySelectorAll('.chip-hotspot');
+        const placeholder = document.getElementById('placeholder-text');
+        const content = document.getElementById('chip-content');
+        
+        const titleEl = document.getElementById('chip-title');
+        const subtitleEl = document.getElementById('chip-subtitle');
+        const descEl = document.getElementById('chip-desc');
+        const costLabelEl = document.getElementById('chip-cost-label');
+        const costBarEl = document.getElementById('chip-cost-bar');
+        const collabEl = document.getElementById('chip-collab-text');
+        const suppliersEl = document.getElementById('chip-suppliers');
+        const bomEl = document.getElementById('chip-bom');
+
+        hotspots.forEach(hotspot => {
+            hotspot.addEventListener('click', () => {
+                hotspots.forEach(h => h.classList.remove('active-chip'));
+                hotspot.classList.add('active-chip');
+
+                const chipId = hotspot.getAttribute('data-chip');
+                const data = chipData[chipId];
+
+                placeholder.classList.add('hidden');
+                content.classList.remove('hidden');
+
+                // 文字更新
+                titleEl.innerText = data.title;
+                subtitleEl.innerText = data.subtitle;
+                descEl.innerText = data.desc;
+                costLabelEl.innerText = data.cost;
+                collabEl.innerText = data.collab;
+
+                // 供應商更新
+                suppliersEl.innerHTML = '';
+                data.suppliers.forEach(s => {
+                    const span = document.createElement('span');
+                    span.className = "px-3 py-1 bg-slate-800 text-slate-300 text-xs rounded-full border border-slate-700 hover:border-[#76b900] transition-colors";
+                    span.innerText = s;
+                    suppliersEl.appendChild(span);
+                });
+
+                // BOM 更新
+                bomEl.innerHTML = '';
+                data.bom.forEach(b => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center text-sm";
+                    li.innerHTML = `
+                        <span class="text-slate-400">${b.item}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${b.weight === '最高' ? 'bg-red-900/40 text-red-400' : b.weight === '高' ? 'bg-orange-900/40 text-orange-400' : 'bg-slate-700 text-slate-300'}">${b.weight}</span>
+                    `;
+                    bomEl.appendChild(li);
+                });
+
+                // 動態條
+                costBarEl.style.width = '0%';
+                setTimeout(() => {
+                    costBarEl.style.width = data.cost;
+                }, 50);
+            });
+        });
+    </script>
+</body>
+</html>
